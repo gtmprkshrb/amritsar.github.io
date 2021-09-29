@@ -3,7 +3,7 @@ const config = {
   accessToken:
     "pk.eyJ1IjoiZ3RtcHJrc2hyYiIsImEiOiJjamZ0bXBqZnMxd3E5MnduejVjdGpuN2R4In0.vvrRpEdZWNwaKUO6vmgRHw",
   CSV: "https://docs.google.com/spreadsheets/d/1NWpae4UxuLyMKLVzD-O4QSvgoA1DUbMzcNVE6pIrBmY/gviz/tq?tqx=out:csv&sheet=Bagalkot",
-  center: [77.5905634, 12.9244925],
+  center: [74.7300352, 31.6334677],
   zoom: 10,
   title: "City Dashboard",
   description:
