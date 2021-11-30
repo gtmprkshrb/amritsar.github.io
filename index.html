@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link href='https://api.mapbox.com/mapbox-assembly/v0.24.0/assembly.min.css' rel='stylesheet'>
+    <script src='https://api.mapbox.com/mapbox-assembly/v0.24.0/assembly.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.css' rel='stylesheet' />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <script
+        src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet'
+        href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.css'
+        type='text/css' />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/geojson/0.5.0/geojson.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+    <script src='https://npmcdn.com/csv2geojson@latest/csv2geojson.js'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+    <link rel='stylesheet' href="style.css" />
+</head>
+
+<body>
+    <div class='flex-parent viewport-full relative scroll-hidden'>
+        <div class='flex-child w-full w360-ml absolute static-ml left bottom'>
+            <div class='flex-parent flex-parent--column viewport-third bg-white'>
+                <div class='side flex-child flex-child--grow'>
+                    <div id="sidebarA"
+                        class="flex-parent flex-parent--column-ml flex-parent--center-main theme py12 px12 ">
+                        <h3 id='title' class='txt-l-ml txt-m txt-bold mb6 mr0-ml mr24 align-center block'>
+                        </h3>
+                        <p id='description' class='txt-s py12 none block-ml'>
+                        </p>
+                        <div class="flex-parent flex-parent--center-main relative-ml absolute right top mt0-ml mt6">
+                            <button id='filterResults' class='txt-bold btn btn--stroke mr0-ml mr12 px18-ml px6'>
+                                <svg class='icon inline-block align-middle h24 w24'>
+                                    <use xlink:href='#icon-filter' />
+                                </svg>
+                                <p class="inline-block-ml align-middle remove none">Show Filters</p>
+                            </button>
+                        </div>
+
+
+                    </div>
+                    <div id="listings" class="flex-child viewport-twothirds py12 px12 listings scroll-auto"></div>
+
+                </div>
+            </div>
+        </div>
+        <div class='flex-child flex-child--grow w-auto viewport-full-ml viewport-twothirds' id='map'>
+
+        </div>
+
+        <div id='modal'
+            class='absolute top right bottom left hide-visually flex-parent flex-parent--center-main mt120-ml'>
+            <div class='pt36'>
+                <div class='flex-child bg-white round relative popup'>
+                    <button id='exitButton' class='absolute top right px12 py12'>
+                        <svg class='icon link color-darken50'>
+                            <use xlink:href='#icon-close'></use>
+                        </svg>
+                    </button>
+                    <div class="container">
+                    <div class='row'>
+                        <div class="col s12">
+                            <form id="filters"></form>
+                            <div class='align-center py12'></div>
+                            <div class="reset flex-parent flex-parent--center-main">
+                                <button id="removeFilters" class="btn">Reset Filters</button>
+                            </div>
+                        </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="popup-modal" class="popup-data">
+            <div class="row">
+                <div class="col s6">
+
+                    <div class="card blue-grey darken-1">
+                        <div class="card-content white-text">
+                            <span id="popup-title" class="card-title"></span>
+                            <span style="font-weight: bold">Category: </span>
+                            <p id="popup-category"></p>
+                            <span style="font-weight: bold;">Address: </span>
+                            <p id="popup-address"></p>
+                        </div>
+
+                        <!-- <div  class="modal-footer">
+                            <a style="color:white" onclick="hidePop()" href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+                        </div> -->
+
+                        <div class="card-action">
+                            <button style="width: 35%;" class="share-button" type="button">
+                                <svg>
+                                    <use href="#share-icon"></use>
+                                </svg>
+                                <span>Share</span>
+                            </button>
+
+                            <button onclick="hidePop()"
+                                style=" background-color: red; color:white; width: 35%; float:right"
+                                class="share-button" type="button" title="Share this article">
+                                <svg>
+                                    <use href="#close"></use>
+                                </svg>
+                                <span>Close</span>
+                            </button>
+
+
+
+                            <svg class="hidden">
+                                <defs>
+                                    <symbol id="share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        class="feather feather-share">
+                                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                                        <polyline points="16 6 12 2 8 6"></polyline>
+                                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                                    </symbol>
+
+                                    <symbol id="facebook" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        class="feather feather-facebook">
+                                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z">
+                                        </path>
+                                    </symbol>
+
+                                    <symbol id="twitter" viewBox="0 0 24 24" fill="#1da1f2" stroke="#1da1f2"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        class="feather feather-twitter">
+                                        <path
+                                            d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z">
+                                        </path>
+                                    </symbol>
+
+                                    <symbol id="email" viewBox="0 0 24 24" fill="#777" stroke="#fafafa" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail">
+                                        <path
+                                            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                        </path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </symbol>
+
+                                    <symbol id="linkedin" viewBox="0 0 24 24" fill="#0077B5" stroke="#0077B5"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        class="feather feather-linkedin">
+                                        <path
+                                            d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z">
+                                        </path>
+                                        <rect x="2" y="9" width="4" height="12"></rect>
+                                        <circle cx="4" cy="4" r="2"></circle>
+                                    </symbol>
+
+                                    <symbol id="close" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                        class="feather feather-x-square">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    </symbol>
+                                </defs>
+                            </svg>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+        </div>
+
+        <div class="share-dialog popup-data">
+            <header>
+                <h3 class="dialog-title">Share this location</h3>
+                <button class="close-button"><svg>
+                        <use href="#close"></use>
+                    </svg></button>
+            </header>
+            <div class="targets">
+                <a class="button">
+                    <svg>
+                        <use href="#facebook"></use>
+                    </svg>
+                    <span>Facebook</span>
+                </a>
+
+                <a class="button">
+                    <svg>
+                        <use href="#twitter"></use>
+                    </svg>
+                    <span>Twitter</span>
+                </a>
+
+                <a class="button">
+                    <svg>
+                        <use href="#linkedin"></use>
+                    </svg>
+                    <span>LinkedIn</span>
+                </a>
+
+                <a class="button">
+                    <svg>
+                        <use href="#email"></use>
+                    </svg>
+                    <span>Email</span>
+                </a>
+            </div>
+        </div>
+
+
+    </div>
+
+    </div>
+</body>
+
+<script>
+
+</script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+
+</html>
